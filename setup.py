@@ -10,7 +10,6 @@ setup(
     #long_description_content_type='text/markdown',
     packages=find_packages(),
     install_requires=[
-        "lmcache>=0.1.4",
         "vllm>=0.6.1.post2,<=0.6.2",
     ],
     entry_points={

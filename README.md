@@ -31,22 +31,61 @@ In this project we extend this to include new APIs to serve user requests as wel
 
 Most of your code should be implemented here unless asked otherwise in the project description.
 
-## Setup Server
 
-You have received a server with GPU and Ubuntu installed to run the basic setup of the system including all three repositories.
-To do so, you need to clone all mentioned repositories and follow LMCache documentation to run the system. 
 
-To make the process a bit easier for you, there is a bash script file ```project-setup.sh``` in this repository that automatically fetches the required repositories, creates a proper python virtual environment and installs the required packages. 
-Please make sure the provided script file is executed correctly without any error in case you are using that. 
-Additionally, you can read the provided script file and follow the setup process manually to ensure all requirements are fulfilled!
+## How to run this project.
+You will need to clone three git repositories to work with this project. First step, clone them all:
+```
+mkdir ik2221_project2
+cd ik2221_project2
+git clone https://github.com/ali-bana/lmcache-vllm-extended.git
+git clone git clone https://github.com/LMCache/LMCache.git
+cd LMCache
+git checkout v0.1.4-alpha
+cd ../
+git clone https://github.com/LMCache/lmcache-server.git
+cd lmcache-server/
+git checkout v0.1.1-alpha
+cd ../
+```
+Now, we need to make a python virtual environment to install all the required packages to work with this project. We will be using uv to do it. You can install uv as follows
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+Now, make a new virtual environment and activate it.
+```
+uv venv ./venv --python 3.12
+source ./venv/bin/activate
+```
+Now, we are ready to install our requirnments.
 
-## How to Run
+```
+uv pip install -r ./lmcache-vllm-extended/requirements.txt
+```
 
-To run the project you need three separate terminals on the same machine. 
-Please make sure that you have activated the virtual environment you made on the setup phase on all three terminals.
+Before installing our local packages, first you need to open the file `lmcache-server/setup.py` and remove lmcache from `install_requires` to prevent pip from fetching lmcache and causing later conflicts.
 
-### 1. Run the LMCache Server
+### Servers without nvcc
 
+If the server you will be working with does not have nvcc installed, you will see an error when installing lmcache. So do the following steps:
+
+1- Removed `torchac_cuda >= 0.2.5` from `install_requires` — this package requires nvcc (CUDA compiler) to build.
+
+2- In `LMCache/lmcache/storage_backend/serde/cachegen_decoder.py` move import `torchac_cuda` from module level into `decode_chunk()` which makes the import lazy so startup doesn't fail; only fails if CacheGen compression is actually used (it isn't in this project).
+
+3- In `LMCache/lmcache/storage_backend/serde/cachegen_encoder.py` move `import torchac_cuda` inside the two functions that use it.
+
+### Install Local Packages
+Finally, we will install lmcache and lmcache-server as editable packages into our virtual environment.
+```
+uv pip install -e ./lmcache-vllm-extended
+uv pip install -e ./LMCache                     
+uv pip install -e ./lmcache-server                  
+```
+
+## Running the Project
+
+### Terminal 1 — LMCache Server:
 To run the LMCache storage server you can go to the ```lmcache-server``` directory and run:
 ```
 python3 -m lmcache_server.server <server_ip> <port> <storage_dir>
@@ -54,31 +93,32 @@ python3 -m lmcache_server.server <server_ip> <port> <storage_dir>
 The storage directory is where the server keeps all the stored KV-Caches.
 Alternatively, it is possible to set `<sotrage_dir>` to `cpu` but in this project we prefer to have KV-caches written in a file.
 
-### 2. Run the LMCache Engine
-
-To run the LMCache engine you need to make sure the PYTHONPATH parameter is set correctly on your server with having `LMCache` and `lmcache-vllm-extended` correct directory in it.
-To do so, and running the engine you can use the following commands:
-
+### Terminal 2 — LMCache Engine:
 ```
-export PYTHONPATH="<path_to_LMCache_repo>:<path_to_lmcache-vllm-extended>:$PYTHONPATH"
-LMCACHE_CONFIG_FILE=<path_to_configuration_yaml> CUDA_VISIBLE_DEVICES=0 python lmcache_vllm/script.py serve Qwen/Qwen2.5-1.5B-Instruct --gpu-memory-utilization 0.8 --dtype half --port 8000
+LMCACHE_CONFIG_FILE=lmcache-vllm-extended/configuration.yaml CUDA_VISIBLE_DEVICES=0 python lmcache-vllm-extended/lmcache_vllm/script.py serve Qwen/Qwen2.5-1.5B-Instruct  --gpu-memory-utilization 0.8 --dtype half --port 8000 --guided-decoding-backend lm-format-enforcer
 ```
-
-You can use the `configuration.yaml` file in this repository to start with running the project. More information about the configuration file and possible options are available at [LMCache documentation][LMCache-doc] website.
+You can use the `configuration.yaml` file in this repository to start with running the project. More information about the configuration file and possible options are available at LMCache documentation website.
 
 Indeed, you may need to change the `CUDA_VISIBLE_DEVICES` value to a proper number if you have more than one GPU on your machine and need to run the inferencing engine on another GPU than the first one.
 
-### 3. Run the Frontend
 
+### Terminal 3 — Fronted
 There is a simple frontend provided in the `frontend` directory that you can go in and run:
-
 ```
-streamlit run frontend.py
+cd lmcache-vllm-extended/frontend && streamlit run frontend.py
 ```
-
+you can also use the cli version if you prefer.
+```
+cd lmcache-vllm-extended/frontend && python cli.py --context context.txt 
+```
 The provided frontend uses a sample text file and prepends it to all prompts sent in the browser.
 You may need to modify that to achieve all requirements in the project description.
 
+
+More information can be found in the following links.
+
 [LMCache]: https://github.com/LMCache/LMCache
+
 [LMCache-Server]: https://github.com/LMCache/lmcache-server
+
 [LMCache-doc]: https://docs.lmcache.ai/configuration/config.html
