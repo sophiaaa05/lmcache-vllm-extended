@@ -69,7 +69,7 @@ Before installing our local packages, first you need to open the file `lmcache-s
 
 If the server you will be working with does not have nvcc installed, you will see an error when installing lmcache. So do the following steps:
 
-1- Remove `torchac_cuda >= 0.2.5` from `install_requires` — this package requires nvcc (CUDA compiler) to build.
+1- Inside LMCache package, in `setup.py`, Remove `torchac_cuda >= 0.2.5` from `install_requires` — this package requires nvcc (CUDA compiler) to build.
 
 2- In `LMCache/lmcache/storage_backend/serde/cachegen_decoder.py` move import `torchac_cuda` from module level into `decode_chunk()` which makes the import lazy so startup doesn't fail; only fails if CacheGen compression is actually used (it isn't in this project).
 
@@ -103,6 +103,8 @@ Indeed, you may need to change the `CUDA_VISIBLE_DEVICES` value to a proper numb
 
 
 ### Terminal 3 — Frontend
+First, inside `lmcache-vllm-extended/frontend`, place the paper summaries from canvas inside a folder named `data`.
+
 There is a simple frontend provided in the `frontend` directory that you can go in and run:
 ```
 cd lmcache-vllm-extended/frontend && streamlit run frontend.py
