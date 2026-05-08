@@ -7,9 +7,7 @@ Loads context files (.txt), generates questions for each,
 shuffles them (unordered), sends them sequentially to the LLM,
 and records latency + throughput for analysis.
 
-Usage:
-    python request_generator.py --context-dir ../ik2221-data-resources
-    python request_generator.py --context-dir ../ik2221-data-resources --repeat 2 --label small_cache
+
 """
 
 
@@ -33,6 +31,13 @@ QUESTIONS = [
     "What is the key contribution described in this document?",
     "What problem does this document address?",
     "What methods or techniques are proposed in this document?",
+
+    
+    "What datasets or benchmarks are used in this document?",
+    "What evaluation metrics are used?",
+    "What is the system architecture described in this document?",
+    "What hardware or infrastructure is required?",
+    "What are the computational costs mentioned?",
 ]
 
 # ─── LOAD CONTEXTS ────────────────────────────────────────────────────────────
@@ -178,7 +183,7 @@ def main():
     parser.add_argument("--output-dir", default="results",
                         help="Folder to save JSON result files")
     parser.add_argument("--label", default="experiment",
-                        help="Label for this run, e.g. no_cache / small_cache / large_cache")
+                        help="Label for this run")
     args = parser.parse_args()
 
     random.seed(args.seed)
